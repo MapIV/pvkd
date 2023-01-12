@@ -24,7 +24,7 @@ model_params:
 ## Dataset options
 dataset_params:
   dataset_type: "cylinder_dataset"
-  pc_dataset_type: "SemKITTI_sk"
+  pc_dataset_type: "InferenceDataset"
   ignore_label: 0
   return_test: False
   fixed_volume_space: True
@@ -42,7 +42,7 @@ dataset_params:
 ###################
 ## Data_loader options
 train_data_loader:
-  data_path: "/home/pe/iSSD1/semantic_kitti/sequences"
+  data_path: "/home/pe/iSSD2/deepen_dataset_raw/HavlOgYpwQNuWPnzpPti53w5/original_pcd/"
   imageset: "train"
   return_ref: True
   batch_size: 3
@@ -50,7 +50,7 @@ train_data_loader:
   num_workers: 12 #4
 
 val_data_loader:
-  data_path: "/home/pe/iSSD1/semantic_kitti/sequences"
+  data_path: "/home/pe/iSSD2/deepen_dataset_raw/HavlOgYpwQNuWPnzpPti53w5/original_pcd/"
   imageset: "test" #"val"
   return_ref: True
   batch_size: 3

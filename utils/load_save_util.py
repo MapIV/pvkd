@@ -45,6 +45,7 @@ def load_checkpoint(model_load_path, model):
                     value = value1
             nomatch_size += 1
             part_load[k] = value
+            print(my_model_dict[k].shape, value.shape)
             assert my_model_dict[k].shape == value.shape
             #print("model shape:{}, pre shape:{}".format(str(my_model_dict[k].shape), str(value.shape)))
 

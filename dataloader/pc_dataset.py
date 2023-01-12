@@ -7,7 +7,7 @@ import numpy as np
 from torch.utils import data
 import yaml
 import pickle
-
+from pypcd import pypcd
 REGISTERED_PC_DATASET_CLASSES = {}
 
 
@@ -24,6 +24,55 @@ def get_pc_model_class(name):
     global REGISTERED_PC_DATASET_CLASSES
     assert name in REGISTERED_PC_DATASET_CLASSES, f"available class: {REGISTERED_PC_DATASET_CLASSES}"
     return REGISTERED_PC_DATASET_CLASSES[name]
+
+@register_dataset
+class InferenceDataset(data.Dataset):
+    def __init__(self, data_path,
+                 imageset='',
+                 return_ref='',
+                 nusc='',
+                 data_type='pcd',
+                 label_mapping="semantic-kitti.yaml"):
+        """
+        supported data_type:
+            bin : KITTI binary '.bin' file
+            pcd : .pcd files
+        TODO: numpy: already formatted Nx4 numpy array
+        """
+        with open(label_mapping, 'r') as stream:
+            semkittiyaml = yaml.safe_load(stream)
+        self.data_type = data_type
+        self.learning_map = semkittiyaml['learning_map']
+        self.im_idx = []
+        self.im_idx += absoluteFilePaths(data_path)
+
+    def to_XYZI_array(self, points_struct):
+        points = np.zeros((points_struct['x'].shape[0], 4), dtype=float)
+        points[:, 0] = points_struct['x']
+        points[:, 1] = points_struct['y']
+        points[:, 2] = points_struct['z']
+        # Load intensity
+        if 'intensity' in points_struct.dtype.names:
+            points[:, 3] = points_struct['intensity']
+        elif 'i' in points_struct.dtype.names:
+            points[:, 3] = points_struct['intensity']
+        else:
+            print("intensity not found, that's probably not good but feel free to supress this")
+        return points
+
+    def __len__(self):
+        """Denotes the total number of samples"""
+        return len(self.im_idx)
+
+    def __getitem__(self, index):
+        if self.data_type == 'bin':
+            raw_data = np.fromfile(self.im_idx[index], dtype=np.float32).reshape((-1, 4))
+        elif self.data_type == 'pcd':
+            points_struct = pypcd.PointCloud.from_path(self.im_idx[index])
+            raw_data = self.to_XYZI_array(points_struct.pc_data)
+        annotated_data = np.expand_dims(np.zeros_like(raw_data[:, 0], dtype=int), axis=1)
+        data_tuple = (raw_data[:, :3], annotated_data.astype(np.uint8))
+        return data_tuple
 
 @register_dataset
 class SemKITTI_demo(data.Dataset):
