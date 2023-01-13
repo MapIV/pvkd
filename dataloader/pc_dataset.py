@@ -72,6 +72,7 @@ class InferenceDataset(data.Dataset):
             raw_data = self.to_XYZI_array(points_struct.pc_data)
         annotated_data = np.expand_dims(np.zeros_like(raw_data[:, 0], dtype=int), axis=1)
         data_tuple = (raw_data[:, :3], annotated_data.astype(np.uint8))
+        data_tuple += (raw_data[:, 3],)
         return data_tuple
 
 @register_dataset
@@ -88,7 +89,6 @@ class SemKITTI_demo(data.Dataset):
         self.im_idx += absoluteFilePaths(data_path)
         self.label_idx = []
         if self.imageset == 'val':
-            print(demo_label_path)
             self.label_idx += absoluteFilePaths(demo_label_path)
 
     def __len__(self):

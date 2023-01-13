@@ -4,6 +4,7 @@
 import argparse
 import os
 import yaml
+import glob
 import numpy as np
 
 # possible splits
@@ -77,7 +78,10 @@ if __name__ == '__main__':
     quit()
 
   # assert split
-  assert(FLAGS.split in splits)
+  if FLAGS.split == 'all':
+      pass
+  else:
+    assert(FLAGS.split in splits)
 
   print("Opening data config file %s" % FLAGS.datacfg)
   DATA = yaml.safe_load(open(FLAGS.datacfg, 'r'))
@@ -98,21 +102,23 @@ if __name__ == '__main__':
   remap_lut[list(remapdict.keys())] = list(remapdict.values())
   # print(remap_lut)
 
-  # get wanted set
-  sequence = []
-  sequence.extend(DATA["split"][FLAGS.split])
-
   # get label paths
-  label_names = []
-  for sequence in sequence:
-    sequence = '{0:02d}'.format(int(sequence))
-    label_paths = os.path.join(root_directory, "sequences",
-                               sequence, label_directory)
-    # populate the label names
-    seq_label_names = [os.path.join(dp, f) for dp, dn, fn in os.walk(
-        os.path.expanduser(label_paths)) for f in fn if ".label" in f]
-    seq_label_names.sort()
-    label_names.extend(seq_label_names)
+  if FLAGS.split == 'all':
+      label_names = glob.glob(FLAGS.predictions + '/*.label')
+  else:
+      label_names = []
+      # get wanted set
+      sequence = []
+      sequence.extend(DATA["split"][FLAGS.split])
+      for sequence in sequence:
+        sequence = '{0:02d}'.format(int(sequence))
+        label_paths = os.path.join(root_directory, "sequences",
+                                   sequence, label_directory)
+        # populate the label names
+        seq_label_names = [os.path.join(dp, f) for dp, dn, fn in os.walk(
+            os.path.expanduser(label_paths)) for f in fn if ".label" in f]
+        seq_label_names.sort()
+        label_names.extend(seq_label_names)
   # print(label_names)
 
   # open each file, get the tensor, and remap only the lower half (semantics)

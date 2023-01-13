@@ -56,9 +56,9 @@ def main(args):
     unique_label = np.asarray(sorted(list(SemKITTI_label_name.keys())))[1:] - 1
     unique_label_str = [SemKITTI_label_name[x] for x in unique_label + 1]
 
-    # my_model = model_builder.build(model_config)
-    # if os.path.exists(model_load_path):
-    #     my_model = load_checkpoint(model_load_path, my_model)
+    my_model = model_builder.build(model_config)
+    if os.path.exists(model_load_path):
+        my_model = load_checkpoint(model_load_path, my_model)
 
     my_model.to(pytorch_device)
     optimizer = optim.Adam(my_model.parameters(), lr=train_hypers["learning_rate"])
@@ -90,7 +90,6 @@ def main(args):
                         test_pt_fea_ten = [torch.from_numpy(i).type(torch.FloatTensor).to(pytorch_device) for i in
                                           test_pt_fea]
                         test_grid_ten = [torch.from_numpy(i).to(pytorch_device) for i in test_grid]
-
                         predict_labels = my_model(test_pt_fea_ten, test_grid_ten, val_batch_size, test_grid, voting_num, use_tta=True)
                         predict_labels = torch.argmax(predict_labels, dim=0).type(torch.uint8)
                         predict_labels = predict_labels.cpu().detach().numpy()

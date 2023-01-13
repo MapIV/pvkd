@@ -86,14 +86,12 @@ def main(args):
             test_pt_fea_ten = [torch.from_numpy(i).type(torch.FloatTensor).to(pytorch_device) for i in
                               test_pt_fea]
             test_grid_ten = [torch.from_numpy(i).to(pytorch_device) for i in test_grid]
-
             predict_labels = my_model(test_pt_fea_ten, test_grid_ten, val_batch_size, test_grid, voting_num, use_tta=True)
             predict_labels = torch.argmax(predict_labels, dim=0).type(torch.uint8)
             predict_labels = predict_labels.cpu().detach().numpy()
             test_pred_label = np.expand_dims(predict_labels,axis=1)
-            save_dir = test_pt_dataset.im_idx[test_index[0]]
-            _,dir2 = save_dir.split('/sequences/',1)
-            new_save_dir = output_path + '/sequences/' +dir2.replace('velodyne','predictions')[:-3]+'label'
+            ex_idx = os.path.basename(test_pt_dataset.im_idx[test_index[0]])
+            new_save_dir = os.path.join(output_path, ex_idx[:-3] + 'label')
             if not os.path.exists(os.path.dirname(new_save_dir)):
                 try:
                     os.makedirs(os.path.dirname(new_save_dir))
