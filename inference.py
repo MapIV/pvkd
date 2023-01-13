@@ -16,7 +16,7 @@ from dataloader.pc_dataset import get_SemKITTI_label_name
 from builder import data_builder, model_builder, loss_builder
 from config.config import load_config_data
 
-from utils.load_save_util import load_checkpoint
+from utils.load_save_util import load_checkpoint, load_checkpoint_1b1
 
 import warnings
 
@@ -56,7 +56,8 @@ def main(args):
 
     my_model = model_builder.build(model_config)
     if os.path.exists(model_load_path):
-        my_model = load_checkpoint(model_load_path, my_model)
+        # my_model = load_checkpoint(model_load_path, my_model)
+        my_model = load_checkpoint_1b1(model_load_path, my_model)
 
     my_model.to(pytorch_device)
     optimizer = optim.Adam(my_model.parameters(), lr=train_hypers["learning_rate"])

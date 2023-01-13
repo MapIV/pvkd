@@ -82,3 +82,21 @@ learning_map:
   27: 14
   28: 15
   30: 16
+learning_map_inv: # maps to similar to semantic kitti so we can use same color scheme
+  0: 1
+  1: 81
+  2: 11
+  3: 13
+  4: 10
+  5: 20
+  6: 32
+  7: 30
+  8: 99
+  9: 20
+  10: 18
+  11: 40
+  12: 49
+  13: 48
+  14: 72
+  15: 52
+  16: 70

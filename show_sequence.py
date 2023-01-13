@@ -50,8 +50,8 @@ for f, label_fp in enumerate(label_list):
                lidar[:, 1],
                s=0.5, c=colors, marker='o', facecolor=colors)
     ax.axis('square')
-    ax.set_xlim(-50, 50)
-    ax.set_ylim(-50, 50)
+    ax.set_xlim(-60, 60)
+    ax.set_ylim(-60, 60)
     ax.set_axis_off()
     # plt.show()
 

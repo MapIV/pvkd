@@ -15,23 +15,21 @@ class cylinder_fea(nn.Module):
     def __init__(self, grid_size, fea_dim=3,
                  out_pt_fea_dim=64, max_pt_per_encode=64, fea_compre=None):
         super(cylinder_fea, self).__init__()
-
         self.PPmodel = nn.Sequential(
             nn.BatchNorm1d(fea_dim),
-
-            nn.Linear(fea_dim, 64),#64
-            nn.BatchNorm1d(64),
+            nn.Linear(fea_dim, int(out_pt_fea_dim/4)),     # KITTI: , 64 NUSC: 32
+            nn.BatchNorm1d(int(out_pt_fea_dim/4)),         # SHOULD MATCH ABOVE
             nn.ReLU(),
 
-            nn.Linear(64, 128),
-            nn.BatchNorm1d(128),
+            nn.Linear(int(out_pt_fea_dim/4), int(out_pt_fea_dim/2)),          # KITTI: 64, 128 NUSC: 32, 64
+            nn.BatchNorm1d(int(out_pt_fea_dim/2)),         # SHOULD MATCH ABOVE
             nn.ReLU(),
 
-            nn.Linear(128, 256),
-            nn.BatchNorm1d(256),
+            nn.Linear(int(out_pt_fea_dim/2), out_pt_fea_dim),        # KITTI: 128, 256 NUSC 64, 128
+            nn.BatchNorm1d(out_pt_fea_dim),        # SHOULD MATCH ABOVE
             nn.ReLU(),
 
-            nn.Linear(256, out_pt_fea_dim)
+            nn.Linear(out_pt_fea_dim, out_pt_fea_dim)  # KITTI: 256,  NUSC 128,
         )
 
         self.max_pt = max_pt_per_encode

@@ -46,6 +46,14 @@ class InferenceDataset(data.Dataset):
         self.im_idx = []
         self.im_idx += absoluteFilePaths(data_path)
 
+    def normalize_intensity(self, intensity, norm_factor = 10, max_intensity_value=255):
+        return 2 * np.e ** (norm_factor * intensity / max_intensity_value) / \
+            (1 + np.e ** (norm_factor * intensity / max_intensity_value)) - 1
+
+    def normalize_height(self, points_z, target_height=-1.73):
+        ground_height = np.percentile(points_z, 0.99)
+        return points_z - (ground_height - target_height)
+
     def to_XYZI_array(self, points_struct):
         points = np.zeros((points_struct['x'].shape[0], 4), dtype=float)
         points[:, 0] = points_struct['x']
@@ -70,6 +78,8 @@ class InferenceDataset(data.Dataset):
         elif self.data_type == 'pcd':
             points_struct = pypcd.PointCloud.from_path(self.im_idx[index])
             raw_data = self.to_XYZI_array(points_struct.pc_data)
+            raw_data[:, 3] = self.normalize_intensity(raw_data[:, 3])
+            raw_data[:, 2] = self.normalize_height(raw_data[:, 2])
         annotated_data = np.expand_dims(np.zeros_like(raw_data[:, 0], dtype=int), axis=1)
         data_tuple = (raw_data[:, :3], annotated_data.astype(np.uint8))
         data_tuple += (raw_data[:, 3],)
