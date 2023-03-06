@@ -144,8 +144,7 @@ def polar2cat(input_xyz_polar):
 class cylinder_dataset(data.Dataset):
     def __init__(self, in_dataset, grid_size, rotate_aug=False, flip_aug=False, ignore_label=255, return_test=False,
                  fixed_volume_space=False, max_volume_space=[50, np.pi, 2], min_volume_space=[0, -np.pi, -4],
-                 scale_aug=False,
-                 transform_aug=False, trans_std=[0.1, 0.1, 0.1],
+                 scale_aug=False, transform_aug=False, trans_std=[0.1, 0.1, 0.1],
                  min_rad=-np.pi / 4, max_rad=np.pi / 4, use_tta=False):
         self.point_cloud_dataset = in_dataset
         self.grid_size = np.asarray(grid_size)
@@ -234,6 +233,7 @@ class cylinder_dataset(data.Dataset):
                 xyz[:, 1] = -xyz[:, 1]
             elif flip_type == 3:
                 xyz[:, :2] = -xyz[:, :2]
+
         if self.scale_aug:
             noise_scale = np.random.uniform(0.95, 1.05)
             xyz[:, 0] = noise_scale * xyz[:, 0]

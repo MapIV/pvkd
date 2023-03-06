@@ -46,7 +46,7 @@ class InferenceDataset(data.Dataset):
         self.im_idx = []
         self.im_idx += absoluteFilePaths(data_path)
 
-    def normalize_intensity(self, intensity, norm_factor = 10, max_intensity_value=255):
+    def normalize_intensity(self, intensity, norm_factor = 5, max_intensity_value=255):
         return 2 * np.e ** (norm_factor * intensity / max_intensity_value) / \
             (1 + np.e ** (norm_factor * intensity / max_intensity_value)) - 1
 
@@ -311,7 +311,7 @@ class SemKITTI_sk_multiscan(data.Dataset):
         else:
             raise Exception('Split must be train/val/test')
 
-        multiscan = 2 # additional two frames are fused with target-frame. Hence, 3 point clouds in total
+        multiscan = 10 # additional two frames are fused with target-frame. Hence, 3 point clouds in total
         self.multiscan = multiscan
         self.im_idx = []
 

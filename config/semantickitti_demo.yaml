@@ -42,18 +42,18 @@ dataset_params:
 ###################
 ## Data_loader options
 train_data_loader:
-  data_path: "/home/pe/iSSD2/deepen_dataset_raw/HavlOgYpwQNuWPnzpPti53w5/original_pcd/"
+  data_path: "/home/pe/iSSD1/seams_lv/pandarxtm_2000"
   imageset: "train"
   return_ref: True
-  batch_size: 3
+  batch_size: 1
   shuffle: True
   num_workers: 12 #4
 
 val_data_loader:
-  data_path: "/home/pe/iSSD2/deepen_dataset_raw/HavlOgYpwQNuWPnzpPti53w5/original_pcd/"
+  data_path: "/home/pe/iSSD1/seams_lv/pandarxtm_2000"
   imageset: "test" #"val"
   return_ref: True
-  batch_size: 3
+  batch_size: 1
   shuffle: False
   num_workers: 12 #4
 

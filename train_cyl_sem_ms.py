@@ -54,6 +54,7 @@ def main(args):
 
     my_model = model_builder.build(model_config)
     if os.path.exists(model_load_path):
+        print(f"Loading pre-trained model {model_load_path}")
         my_model = load_checkpoint(model_load_path, my_model)
 
     my_model.to(pytorch_device)
@@ -115,10 +116,9 @@ def main(args):
                 val_miou = np.nanmean(iou) * 100
                 del val_vox_label, val_grid, val_pt_fea, val_grid_ten
 
-                # save model if performance is improved
-                if best_val_miou < val_miou:
-                    best_val_miou = val_miou
-                    torch.save(my_model.state_dict(), model_save_path)
+                # save model
+                best_val_miou = val_miou
+                torch.save(my_model.state_dict(), model_save_path + f"_epoch{epoch}_{val_miou:.3f}.pt")
 
                 print('Current val miou is %.3f while the best val miou is %.3f' %
                       (val_miou, best_val_miou))

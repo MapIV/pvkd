@@ -54,6 +54,7 @@ def main(args):
 
     my_model = model_builder.build(model_config)
     if os.path.exists(model_load_path):
+        print("Loading pretrained model")
         my_model = load_checkpoint(model_load_path, my_model)
 
     my_model.to(pytorch_device)
@@ -80,7 +81,8 @@ def main(args):
         time.sleep(10)
         # lr_scheduler.step(epoch)
         for i_iter, (_, train_vox_label, train_grid, _, train_pt_fea) in enumerate(train_dataset_loader):
-            if global_iter % check_iter == 0 and epoch > 0:
+            if (global_iter % check_iter == 0 and epoch > 0) or args.eval:
+                print("Running eval")
                 my_model.eval()
                 hist_list = []
                 val_loss_list = []
@@ -105,6 +107,9 @@ def main(args):
                                                                 val_grid[count][:, 2]], val_pt_labs[count],
                                                             unique_label))
                         val_loss_list.append(loss.detach().cpu().numpy())
+                    if args.eval:
+                        print("Eval complete")
+                        sys.exit()
                 my_model.train()
                 iou = per_class_iu(sum(hist_list))
                 print('Validation per class iou: ')
@@ -116,7 +121,7 @@ def main(args):
                 # save model if performance is improved
                 if best_val_miou < val_miou:
                     best_val_miou = val_miou
-                    torch.save(my_model.state_dict(), model_save_path)
+                torch.save(my_model.state_dict(), model_save_path + f"_epoch{epoch}_{val_miou:.3f}.pt")
 
                 print('Current val miou is %.3f while the best val miou is %.3f' %
                       (val_miou, best_val_miou))
@@ -160,6 +165,7 @@ if __name__ == '__main__':
     # Training settings
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('-y', '--config_path', default='config/semantickitti.yaml')
+    parser.add_argument('--eval', action='store_true')
     args = parser.parse_args()
 
     print(' '.join(sys.argv))

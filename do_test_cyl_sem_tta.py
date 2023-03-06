@@ -28,13 +28,11 @@ def train2SemKITTI(input_label):
     return input_label + 1
 
 def main(args):
-    print("hello")
     pytorch_device = torch.device('cuda:0')
 
     config_path = args.config_path
 
     configs = load_config_data(config_path)
-    print("???")
     dataset_config = configs['dataset_params']
     train_dataloader_config = configs['train_data_loader']
     val_dataloader_config = configs['val_data_loader']
@@ -74,6 +72,7 @@ def main(args):
 
     output_path = 'out_cyl/test'
     voting_num = 4
+    hist_list = []
 
     if True:
         print('*'*80)
@@ -85,14 +84,23 @@ def main(args):
             if True:
                 my_model.eval()
                 with torch.no_grad():
-                    for i_iter_test, (_, _, test_grid, _, test_pt_fea, test_index) in enumerate(
+                    for i_iter_test, (_, test_vox_label, test_grid, _, test_pt_fea, test_index) in enumerate(
                             test_dataset_loader):
                         test_pt_fea_ten = [torch.from_numpy(i).type(torch.FloatTensor).to(pytorch_device) for i in
                                           test_pt_fea]
+                        test_label_tensor = test_vox_label.type(torch.LongTensor).to(pytorch_device)
                         test_grid_ten = [torch.from_numpy(i).to(pytorch_device) for i in test_grid]
-                        predict_labels = my_model(test_pt_fea_ten, test_grid_ten, val_batch_size, test_grid, voting_num, use_tta=True)
-                        predict_labels = torch.argmax(predict_labels, dim=0).type(torch.uint8)
+                        # predict_labels = my_model(test_pt_fea_ten, test_grid_ten, val_batch_size, test_grid, voting_num, use_tta=True)
+                        # predict_labels = torch.argmax(predict_labels, dim=0).type(torch.uint8)
+                        #
+                        predict_labels = my_model(test_pt_fea_ten, test_grid_ten, test_label_tensor.shape[0])#val_batch_size)
+                        predict_labels = torch.argmax(predict_labels, dim=1)
                         predict_labels = predict_labels.cpu().detach().numpy()
+                        for count, i_test_grid in enumerate(test_grid):
+                            hist_list.append(fast_hist_crop(predict_labels[
+                                                                count, test_grid[count][:, 0], test_grid[count][:, 1],
+                                                                test_grid[count][:, 2]], test_grid[count],
+                                                            unique_label))
                         test_pred_label = np.expand_dims(predict_labels,axis=1)
                         save_dir = test_pt_dataset.im_idx[test_index[0]]
                         _,dir2 = save_dir.split('/sequences/',1)
@@ -106,6 +114,10 @@ def main(args):
                         test_pred_label = test_pred_label.astype(np.uint32)
                         test_pred_label.tofile(new_save_dir)
                         pbar.update(1)
+                    iou = per_class_iu(sum(hist_list))
+                    print('Validation per class iou: ')
+                    for class_name, class_iou in zip(unique_label_str, iou):
+                        print('%s : %.2f%%' % (class_name, class_iou * 100))
                 del test_grid, test_pt_fea, test_grid_ten, test_index
         pbar.close()
         print('Predicted test labels are saved in %s. Need to be shifted to original label format before submitting to the Competition website.' % output_path)
@@ -114,7 +126,7 @@ def main(args):
 if __name__ == '__main__':
     # Training settings
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('-y', '--config_path', default='config/semantickitti.yaml')
+    parser.add_argument('-y', '--config_path', default='config/semantickitti_simple.yaml')
     args = parser.parse_args()
 
     print(' '.join(sys.argv))

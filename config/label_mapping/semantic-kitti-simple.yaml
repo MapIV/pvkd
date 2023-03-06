@@ -111,78 +111,65 @@ learning_map:
   1 : 0     # "outlier" mapped to "unlabeled" --------------------------mapped
   10: 1     # "car"
   11: 2     # "bicycle"
-  13: 5     # "bus" mapped to "other-vehicle" --------------------------mapped
-  15: 3     # "motorcycle"
-  16: 5     # "on-rails" mapped to "other-vehicle" ---------------------mapped
+  13: 4     # "bus" mapped to "large vehicles"
+  15: 2     # "motorcycle" mapped to "bicycle"
+  16: 7    # "on-rails" mapped to "other-vehicle" ---------------------mapped
   18: 4     # "truck"
-  20: 5     # "other-vehicle"
-  30: 6     # "person"
-  31: 7     # "bicyclist"
-  32: 8     # "motorcyclist"
-  40: 9     # "road"
-  44: 10    # "parking"
-  48: 11    # "sidewalk"
-  49: 12    # "other-ground"
-  50: 13    # "building"
-  51: 14    # "fence"
+  20: 7     # "other-vehicle"
+  30: 3     # "person"
+  31: 2    # "bicyclist"
+  32: 2     # "motorcyclist"
+  40: 5     # "road"
+  44: 5    # "parking" to road
+  48: 6    # "sidewalk"
+  49: 6    # "other-ground"
+  50: 9    # "building"
+  51: 10    # "fence"
   52: 0     # "other-structure" mapped to "unlabeled" ------------------mapped
-  60: 9     # "lane-marking" to "road" ---------------------------------mapped
-  70: 15    # "vegetation"
-  71: 16    # "trunk"
-  72: 17    # "terrain"
-  80: 18    # "pole"
-  81: 19    # "traffic-sign"
+  60: 5     # "lane-marking" to "road" ---------------------------------mapped
+  70: 11    # "vegetation"
+  71: 11    # "trunk"
+  72: 8    # "terrain"
+  80: 10    # "pole"
+  81: 10    # "traffic-sign"
   99: 0     # "other-object" to "unlabeled" ----------------------------mapped
   252: 1    # "moving-car" to "car" ------------------------------------mapped
-  253: 7    # "moving-bicyclist" to "bicyclist" ------------------------mapped
-  254: 6    # "moving-person" to "person" ------------------------------mapped
-  255: 8    # "moving-motorcyclist" to "motorcyclist" ------------------mapped
-  256: 5    # "moving-on-rails" mapped to "other-vehicle" --------------mapped
-  257: 5    # "moving-bus" mapped to "other-vehicle" -------------------mapped
+  253: 2    # "moving-bicyclist" to "bicyclist" ------------------------mapped
+  254: 3    # "moving-person" to "person" ------------------------------mapped
+  255: 2    # "moving-motorcyclist" to "motorcyclist" ------------------mapped
+  256: 7    # "moving-on-rails" mapped to "other-vehicle" --------------mapped
+  257: 4    # "moving-bus" mapped to "other-vehicle" -------------------mapped
   258: 4    # "moving-truck" to "truck" --------------------------------mapped
-  259: 5    # "moving-other"-vehicle to "other-vehicle" ----------------mapped
+  259: 7    # "moving-other"-vehicle to "other-vehicle" ----------------mapped
+
 learning_map_inv: # inverse of previous map
   0: 0      # "unlabeled", and others ignored
   1: 10     # "car"
   2: 11     # "bicycle"
-  3: 15     # "motorcycle"
+  3: 30     # "pedestrians"
   4: 18     # "truck"
-  5: 20     # "other-vehicle"
-  6: 30     # "person"
-  7: 31     # "bicyclist"
-  8: 32     # "motorcyclist"
-  9: 40     # "road"
-  10: 44    # "parking"
-  11: 48    # "sidewalk"
-  12: 49    # "other-ground"
-  13: 50    # "building"
-  14: 51    # "fence"
-  15: 70    # "vegetation"
-  16: 71    # "trunk"
-  17: 72    # "terrain"
-  18: 80    # "pole"
-  19: 81    # "traffic-sign"
+  5: 40     # "road"
+  6: 49     # "person"
+  7: 20     # "other-vehicles"
+  8: 72     # "terrain"
+  9: 50     # "buildings"
+  10: 52    # "structures"
+  11: 70    # "vegetation"
+
 learning_ignore: # Ignore classes
   0: True      # "unlabeled", and others ignored
   1: False     # "car"
   2: False     # "bicycle"
-  3: False     # "motorcycle"
-  4: False     # "truck"
-  5: False     # "other-vehicle"
-  6: False     # "person"
-  7: False     # "bicyclist"
-  8: False     # "motorcyclist"
-  9: False     # "road"
-  10: False    # "parking"
-  11: False    # "sidewalk"
-  12: False    # "other-ground"
-  13: False    # "building"
-  14: False    # "fence"
-  15: False    # "vegetation"
-  16: False    # "trunk"
-  17: False    # "terrain"
-  18: False    # "pole"
-  19: False    # "traffic-sign"
+  3: False     # "pedestrians"
+  4: False     # "truck, large vehicles"
+  5: False     # "driveable area - road and parking"
+  6: False     # "other ground (sidewalk)"
+  7: True      # "other vehicles"
+  8: False     # "terrain (non-vegetation)"
+  9: False     # "buildings"
+  10: False    # "structures (traffic signs, poles, fences)"
+  11: False    # "vegetation"
+
 split: # sequence numbers
   train:
     - 0
@@ -199,13 +186,13 @@ split: # sequence numbers
     - 8
   test:
     - 11
-#    - 12
-#    - 13
-#    - 14
-#    - 15
-#    - 16
-#    - 17
-#    - 18
-#    - 19
-#    - 20
-#    - 21
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21

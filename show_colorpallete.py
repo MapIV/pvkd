@@ -31,7 +31,9 @@ def PlotColorPalette(category_list, color_list):
 
 all_labels = []
 all_colors = []
+keys = [0, 10, 11, 30, 18, 40, 49, 72, 50, 52, 70, 20]
 for key in labels:
-    all_labels.append(labels[key])
-    all_colors.append(color_map[key])
+    if key in keys:
+        all_labels.append(labels[key])
+        all_colors.append(color_map[key])
 PlotColorPalette(all_labels, all_colors)

@@ -13,19 +13,20 @@ model_params:
 
   fea_dim: 9
   out_fea_dim: 256
-  num_class: 12 #26 #20
+  num_class: 20
   num_input_features: 32 #16
   use_norm: True
-  init_size: 32 #16
+  # init size should be 48 for the x1.5 model, 32 otherwise
+  init_size: 48 #32 #16
 
 
 ###################
 ## Dataset options
 dataset_params:
   dataset_type: "cylinder_dataset"
-  pc_dataset_type: "SemKITTI_sk_multiscan"
+  pc_dataset_type: "InferenceDataset"
   ignore_label: 0
-  return_test: True #False
+  return_test: False
   fixed_volume_space: True
   label_mapping: "./config/label_mapping/semantic-kitti-simple.yaml"
   max_volume_space:
@@ -41,27 +42,28 @@ dataset_params:
 ###################
 ## Data_loader options
 train_data_loader:
-  data_path: "/home/pe/iSSD1/semantic_kitti/sequences"
+  data_path: "/home/pe/iSSD1/seams_lv/pandarxtm_2000"
   imageset: "train"
   return_ref: True
-  batch_size: 1 #2
+  batch_size: 1
   shuffle: True
   num_workers: 12 #4
 
 val_data_loader:
-  data_path: "/home/pe/iSSD1/semantic_kitti/sequences"
+  data_path: "/home/pe/iSSD1/seams_lv/pandarxtm_2000"
   imageset: "test" #"val"
   return_ref: True
-  batch_size: 1 #2
+  batch_size: 1
   shuffle: False
   num_workers: 12 #4
+
 
 ###################
 ## Train params
 train_params:
-  model_load_path: "./model_load_dir/model_fake_50_ms_val_ft.pt"
-  model_save_path: "./model_save_dir/model_full_ms"
+  model_load_path: "./model_load_dir/pvkd_retrained_81.71.pt"
+  model_save_path: "./model_save_dir/model_tmp.pt"
   checkpoint_every_n_steps: 4599
-  max_num_epochs: 40 #40
-  eval_every_n_steps: 10000 #4599
-  learning_rate: 0.0015 #1
+  max_num_epochs: 20 #40
+  eval_every_n_steps: 5000 #4599
+  learning_rate: 0.002 #1

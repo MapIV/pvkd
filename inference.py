@@ -10,6 +10,7 @@ import numpy as np
 import torch
 import torch.optim as optim
 from tqdm import tqdm
+import numpy as np
 
 from utils.metric_util import per_class_iu, fast_hist_crop
 from dataloader.pc_dataset import get_SemKITTI_label_name
@@ -71,13 +72,14 @@ def main(args):
                                                                   grid_size=grid_size,
                                                                   use_tta=True)
 
-    output_path = 'out_cyl/testpcd'
+    output_path = 'out_cyl/pandarxt32m'
     voting_num = 4
 
 
     print('*'*80)
     print('Generate predictions for test split')
     print('*'*80)
+    inf_time = []
     pbar = tqdm(total=len(test_dataset_loader))
     time.sleep(1)
     # my_model.eval()
@@ -87,7 +89,9 @@ def main(args):
             test_pt_fea_ten = [torch.from_numpy(i).type(torch.FloatTensor).to(pytorch_device) for i in
                               test_pt_fea]
             test_grid_ten = [torch.from_numpy(i).to(pytorch_device) for i in test_grid]
+            cur_time = time.perf_counter()
             predict_labels = my_model(test_pt_fea_ten, test_grid_ten, val_batch_size, test_grid, voting_num, use_tta=True)
+            inf_time.append(time.perf_counter() - cur_time)
             predict_labels = torch.argmax(predict_labels, dim=0).type(torch.uint8)
             predict_labels = predict_labels.cpu().detach().numpy()
             test_pred_label = np.expand_dims(predict_labels,axis=1)
@@ -106,12 +110,12 @@ def main(args):
     pbar.close()
     print('Predicted test labels are saved in %s. Need to be shifted to original label format before submitting to the Competition website.' % output_path)
     print('Remapping script can be found in semantic-kitti-api.')
-
+    print('Average inference time:', np.mean(inf_time[1:]))
 
 if __name__ == '__main__':
     # Training settings
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('-y', '--config_path', default='config/semantickitti_demo.yaml')
+    parser.add_argument('-y', '--config_path', default='config/semantickitti_simple.yaml')
     args = parser.parse_args()
 
     print(' '.join(sys.argv))
