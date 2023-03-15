@@ -67,12 +67,11 @@ def main(args):
                                                                   train_dataloader_config,
                                                                   val_dataloader_config,
                                                                   grid_size=grid_size)
-
     # training
-    epoch = 0
+    epoch = 13
     best_val_miou = 0
     my_model.train()
-    global_iter = 0
+    global_iter = 65000
     check_iter = train_hypers['eval_every_n_steps']
 
     while epoch < train_hypers['max_num_epochs']:
@@ -147,6 +146,8 @@ def main(args):
                           (epoch, i_iter, np.mean(loss_list)))
                 else:
                     print('loss error')
+            if global_iter % 5000 == 0:
+                torch.save(my_model.state_dict(), model_save_path + f"_epoch{epoch}_iter{global_iter}.pt")
 
             optimizer.zero_grad()
             pbar.update(1)
@@ -159,7 +160,7 @@ def main(args):
                     print('loss error')
         pbar.close()
         epoch += 1
-
+    torch.save(my_model.state_dict(), model_save_path + f"_epoch{epoch}_iter{global_iter}.pt")
 
 if __name__ == '__main__':
     # Training settings

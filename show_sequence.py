@@ -29,8 +29,8 @@ def to_XYZI_array(points_struct):
         print("intensity not found, that's probably not good but feel free to supress this")
     return points
 
-label_in = '/media/pe/SSD_62/SemanticKitti/multiscan/multiscan10/sequences/00/labels'
-sequence_pcd_in = '/media/pe/SSD_62/SemanticKitti/multiscan/multiscan10/sequences/00/velodyne'
+label_in = '/home/map4/pvkd/out_cyl/semantickitti_multiscan10_dyn'
+sequence_pcd_in = '/media/map4/SSD_62/SemanticKitti/semantic_kitti_ms10_v005_dyn/sequences/08/velodyne'
 
 label_list = glob.glob(label_in + '/*')
 
@@ -49,6 +49,9 @@ for f, label_fp in enumerate(label_list):
 
     label = read_labels(label_fp)
 
+    if np.any(label == 252):
+        print("moving!")
+
     fig, ax = plt.subplots(figsize=(16, 16))
     # plt.set
     # plt.figure(num=1, figsize=(16, 16), dpi=600, facecolor='w', edgecolor='k')
@@ -60,7 +63,7 @@ for f, label_fp in enumerate(label_list):
     ax.set_xlim(-60, 60)
     ax.set_ylim(-60, 60)
     ax.set_axis_off()
-    plt.show()
+    # plt.show()
 
-    # plt.savefig(os.path.join('/home/pe/pvkd/out_cyl/retrained_demo', idx+'.png'), dpi=200, bbox_inches='tight', pad_inches=0)
+    plt.savefig(os.path.join('/home/map4/pvkd/out_cyl/semantickitti_multiscan10_dyn_fig', idx+'.png'), dpi=200, bbox_inches='tight', pad_inches=0)
     plt.close()
