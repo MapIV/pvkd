@@ -35,7 +35,7 @@ labels:
   258: "moving-truck"
   259: "moving-other-vehicle"
 color_map: # bgr
-  0 : [0, 0, 0]
+  0 : [255, 255, 255]
   1 : [0, 0, 255]
   10: [245, 150, 100]
   11: [245, 230, 100]
@@ -61,9 +61,9 @@ color_map: # bgr
   80: [150, 240, 255]
   81: [0, 0, 255]
   99: [255, 255, 50]
-  252: [245, 150, 100]
-  256: [255, 0, 0]
-  253: [200, 40, 255]
+  252: [0, 0, 0]
+  256: [255, 55, 55]
+  253: [150, 0, 205]
   254: [30, 30, 255]
   255: [90, 30, 150]
   257: [250, 80, 100]
@@ -155,6 +155,7 @@ learning_map_inv: # inverse of previous map
   9: 50     # "buildings"
   10: 52    # "structures"
   11: 70    # "vegetation"
+  12: 252
 
 learning_ignore: # Ignore classes
   0: True      # "unlabeled", and others ignored
