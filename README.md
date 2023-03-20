@@ -1,3 +1,10 @@
+## Converting to SpConv 2.1.x
+Install
+* Install pytorch conda install pytorch==1.12.0 torchvision==0.13.0 torchaudio==0.12.0 cudatoolkit=11.3 -c pytorch
+* install spconv 2.1.x `pip install spconv-cu113==2.1.25`
+* Install torch-scatter `conda install pytorch-scatter -c pyg` 
+* Install other dependencies `pip install pyyaml strictyaml tqdm numba Cython`
+
 Point-to-Voxel Knowledge Distillation for LiDAR Semantic Segmentation (CVPR 2022)
 
 Our model achieves state-of-the-art performance on three challenges, i.e., ranks **1st** in [Waymo 3D Semantic Segmentation Challenge](https://waymo.com/open/challenges/2022/3d-semantic-segmentation/) (the "Cylinder3D" and "Offboard_SemSeg" entries, May 2022), ranks **1st** in [SemanticKITTI LiDAR Semantic Segmentation Challenge](https://competitions.codalab.org/competitions/20331#results) (single-scan, the "Point-Voxel-KD" entry, Jun 2022), ranks **2nd** in [SemanticKITTI LiDAR Semantic Segmentation Challenge](https://competitions.codalab.org/competitions/20331#results) (multi-scan, the "PVKD" entry, Dec 2021). Do not hesitate to use our trained models!
