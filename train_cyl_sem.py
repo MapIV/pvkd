@@ -53,8 +53,12 @@ def main(args):
     unique_label_str = [SemKITTI_label_name[x] for x in unique_label + 1]
 
     my_model = model_builder.build(model_config)
-    if os.path.exists(model_load_path):
-        print("Loading pretrained model")
+    if args.pretrained is not None:
+        assert os.path.exists(args.pretrained), f"Model {args.pretrained} not found"
+        print("Loading pretrained model from path")
+        my_model = load_checkpoint(args.pretrained, my_model)
+    elif os.path.exists(model_load_path):
+        print("Loading pretrained model config")
         my_model = load_checkpoint(model_load_path, my_model)
 
     my_model.to(pytorch_device)
@@ -68,10 +72,10 @@ def main(args):
                                                                   val_dataloader_config,
                                                                   grid_size=grid_size)
     # training
-    epoch = 13
+    epoch = args.epoch
     best_val_miou = 0
     my_model.train()
-    global_iter = 65000
+    global_iter = args.iter
     check_iter = train_hypers['eval_every_n_steps']
 
     while epoch < train_hypers['max_num_epochs']:
@@ -167,8 +171,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('-y', '--config_path', default='config/semantickitti.yaml')
     parser.add_argument('--eval', action='store_true')
+    parser.add_argument('-e', '--epoch', default=0)
+    parser.add_argument('-i', '--iter', default=0)
+    parser.add_argument('-p', '--pretrained', default=None)
     args = parser.parse_args()
-
     print(' '.join(sys.argv))
     print(args)
     main(args)

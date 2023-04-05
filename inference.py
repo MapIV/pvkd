@@ -72,7 +72,7 @@ def main(args):
                                                                   grid_size=grid_size,
                                                                   use_tta=True)
 
-    output_path = 'out_cyl/pandarxt32m'
+    output_path = 'out_cyl/nagoyastation_19'
     voting_num = 4
 
 

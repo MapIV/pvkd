@@ -78,8 +78,9 @@ class InferenceDataset(data.Dataset):
         elif self.data_type == 'pcd':
             points_struct = pypcd.PointCloud.from_path(self.im_idx[index])
             raw_data = self.to_XYZI_array(points_struct.pc_data)
-            raw_data[:, 3] = self.normalize_intensity(raw_data[:, 3])
-            raw_data[:, 2] = self.normalize_height(raw_data[:, 2])
+            # raw_data[:, 3] = self.normalize_intensity(raw_data[:, 3])
+            # raw_data[:, 2] = self.normalize_height(raw_data[:, 2])
+
         annotated_data = np.expand_dims(np.zeros_like(raw_data[:, 0], dtype=int), axis=1)
         data_tuple = (raw_data[:, :3], annotated_data.astype(np.uint8))
         data_tuple += (raw_data[:, 3],)

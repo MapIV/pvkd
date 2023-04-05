@@ -13,7 +13,7 @@ model_params:
 
   fea_dim: 9
   out_fea_dim: 256
-  num_class: 13 #20
+  num_class: 14 #20
   num_input_features: 32 #16
   use_norm: True
   # init size should be 48 for the x1.5 model, 32 otherwise
@@ -28,29 +28,28 @@ dataset_params:
   ignore_label: 0
   return_test: True
   fixed_volume_space: True
-  label_mapping: "./config/label_mapping/semantic-kitti-moving.yaml"
+  label_mapping: "./config/label_mapping/semantic-kitti-panda.yaml"
   max_volume_space:
     - 50
     - 3.1415926
-    - 2
+    - 2.27
   min_volume_space:
     - 0
     - -3.1415926
-    - -4
-
+    - -3.73
 
 ###################
 ## Data_loader options
 train_data_loader:
-  data_path: "/media/map4/SSD_62/SemanticKitti/semantic_kitti_ms10_v005_dyn/sequences"
+  data_path: "/media/map4/SSD_62/SemanticKitti/kittipanda_ms20_v005/sequences"
   imageset: "train"
   return_ref: True
-  batch_size: 4
+  batch_size: 2
   shuffle: True
   num_workers: 24 #4
 
 val_data_loader:
-  data_path: "/media/map4/SSD_62/SemanticKitti/semantic_kitti_ms10_v005_dyn/sequences"
+  data_path: "/media/map4/SSD_62/SemanticKitti/kittipanda_ms20_v005/sequences"
   imageset: "val" #"val"
   return_ref: True
   batch_size: 1
@@ -61,7 +60,7 @@ val_data_loader:
 ###################
 ## Train params
 train_params:
-  model_load_path: "/home/map4/pvkd/model_load_dir/multiscan10_dyn/model_epoch19_iter95000.pt"
+  model_load_path: "/home/map4/pvkd/model_load_dir/multiscan10_dyn/model_latest.pt"
   model_save_path: "./model_save_dir/multiscan10_dyn/model"
   checkpoint_every_n_steps: 5000
   max_num_epochs: 20 #40
