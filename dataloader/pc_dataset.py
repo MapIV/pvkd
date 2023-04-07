@@ -3,13 +3,19 @@
 # @file: pc_dataset.py 
 
 import os
-import numpy as np
-from torch.utils import data
 import yaml
+import time
+import glob
 import pickle
+import numpy as np
+from copy import copy
 from pypcd import pypcd
-REGISTERED_PC_DATASET_CLASSES = {}
+from torch.utils import data
+from scipy.spatial import KDTree
+from transforms3d import _gohlketransforms as transformations
 
+
+REGISTERED_PC_DATASET_CLASSES = {}
 
 def register_dataset(cls, name=None):
     global REGISTERED_PC_DATASET_CLASSES
@@ -87,7 +93,7 @@ class InferenceDataset(data.Dataset):
         return data_tuple
 
 @register_dataset
-class MapInferenceDataset:
+class MapInferenceDataset(data.Dataset):
     def __init__(self, data_path,
                  imageset='',
                  return_ref='',
@@ -95,9 +101,13 @@ class MapInferenceDataset:
                  data_type='pcd',
                  label_mapping="semantic-kitti.yaml"):
         """
-        supported data_type:
-            pcd : .pcd files
-        TODO: numpy: already formatted Nx4 numpy array
+        I have to adhere with the base class' init definition, so the variable names are misleading
+        data_path: map .pcd file folder and .ndt files. All PCD maps inside the folder will be concatenated. There should
+        be one .csv file in the folder too
+        ## hardcoded stuff for now
+        search_radius: default is sqrt(25^2 + 25^2) since detections area is 50m rectangle
+        voxel_size: [x, y, z] in meters, 0.2 is good
+        ground_height: z value of ground points in local frame, like 0 or -2. target is -1.73
         """
         with open(label_mapping, 'r') as stream:
             semkittiyaml = yaml.safe_load(stream)
@@ -105,24 +115,230 @@ class MapInferenceDataset:
         self.learning_map = semkittiyaml['learning_map']
         self.im_idx = []
         self.im_idx += absoluteFilePaths(data_path)
+        self.poses = []
+        self.pts_vx_idx, self.uni_vx_idx = [], []
+        self.flag = False
 
-        # Load map
+        # Hardcoded
+        self.search_radius = np.sqrt(25*25*2)   # closest to a 50m cube
+        self.voxel_size = [0.1, 0.1, 0.1]
+        self.ground_height = 0
 
-        # Chop it up
+        if imageset == 'train':
+            print("You cannot use this dataloader for training~")
+            self.poses = [0]
+        else:
+            # Load map and NDT
+            self.pcd_map = self.load_map(data_path)
+            self.labels_map = np.zeros((self.pcd_map.shape[0]))
+            ndt_file = glob.glob(data_path + '/*.csv')[0]
+            assert os.path.exists(ndt_file)
+            all_ndt_poses = self.load_ndt_file(ndt_file)
+            self.kd_tree = self.build_kdtree(self.pcd_map[:, :3])
 
-        # Create offset list
+            # Chop up poses
+            latest_pose = np.zeros((1, 3))
+            print("Parsing NDT Poses")
+            for idx, ndt_pose in enumerate(all_ndt_poses):
+                if idx % 10 == 0: print(f"Parsing NDT Poses {idx+1}/{len(all_ndt_poses)}"
+                                        + '.'*int(idx/len(all_ndt_poses)*10))
+                t, pose, pose_quat = self.get_best_ndt_pose(all_ndt_poses, ndt_pose[0])
+                dist = np.linalg.norm(pose - latest_pose)
+                if idx == 0 or dist > self.search_radius:
+                    latest_pose = pose
+                    pose_matrix = transformations.quaternion_matrix(pose_quat)
+                    pose_matrix[:3, 3] = pose
+                    map_points_idx = self.query_kdtree(self.kd_tree, pose, self.search_radius)
+                    if len(map_points_idx) < 50000: continue
+                    self.poses.append(pose_matrix)
+            print("Parsing NDT Poses" + '..........done!')
 
-        # Offset
+    def __getitem__(self, index):
+        # Get points in radius
+        self.flag = True
+        self.map_points_idx = np.array(self.query_kdtree(self.kd_tree, self.poses[index][:3, 3], self.search_radius), dtype=int)
+        current_pcd = self.pcd_map[self.map_points_idx, :]
+        # map_index = np.arange(0, self.pcd_map.shape[0], 1)
+        # self.current_index = map_index[self.map_points_idx]
 
-    def normalize_intensity(self, intensity, norm_factor = 5, max_intensity_value=255):
+        # Transform
+        intensity = np.copy(current_pcd[:, 3])
+        current_pcd[:, 3] = 1
+        current_pcd = np.matmul(np.linalg.inv(self.poses[index]), current_pcd.T)
+        current_pcd = current_pcd.T
+        current_pcd[:, 3] = intensity
+
+        boundary = {"minX": -50, "maxX": 50, "minY": -50, "maxY": 50, "minZ": -3.73, "maxZ": 2.27}
+        box_filter = self.filtering_boundary(current_pcd, boundary)
+        self.map_points_idx = self.map_points_idx[box_filter]
+        current_pcd = current_pcd[box_filter, :]
+
+        # Adjust height
+        current_pcd[:, 2] = self.shift_height(current_pcd[:, 2], self.ground_height)
+
+        # Voxelize
+        voxelized_pcd, self.pts_vx_idx, self.uni_vx_idx = self.faster_voxelize(current_pcd)
+        self.voxel_grid = np.empty((np.max(self.pts_vx_idx[:, 0])+1,
+                                    np.max(self.pts_vx_idx[:, 1])+1,
+                                    np.max(self.pts_vx_idx[:, 2])+1))
+
+        annotated_data = np.expand_dims(np.zeros_like(voxelized_pcd[:, 0], dtype=int), axis=1)
+        data_tuple = (voxelized_pcd[:, :3], annotated_data.astype(np.uint8))
+        data_tuple += (voxelized_pcd[:, 3],)
+        return data_tuple
+
+    def get_voxel_item(self, index):
+        self.map_points_idx = self.query_kdtree(self.kd_tree, self.poses[index][:3, 3], self.search_radius)
+        current_pcd = self.pcd_map[self.map_points_idx, :]
+
+        # Transform
+        intensity = np.copy(current_pcd[:, 3])
+        current_pcd[:, 3] = 1
+        current_pcd = np.matmul(np.linalg.inv(self.poses[index]), current_pcd.T)
+        current_pcd = current_pcd.T
+        current_pcd[:, 3] = intensity
+
+        # Adjust height
+        current_pcd[:, 2] = self.shift_height(current_pcd[:, 2], self.ground_height)
+
+        # Voxelize
+        voxelized_pcd, _, _ = self.faster_voxelize(current_pcd)
+        return voxelized_pcd
+
+    def update_labels_map(self, labels):
+        self.voxel_grid[self.uni_vx_idx[:, 0], self.uni_vx_idx[:, 1], self.uni_vx_idx[:, 2]] = labels.reshape(-1)
+        self.labels_map[self.map_points_idx] = self.voxel_grid[self.pts_vx_idx[:, 0], self.pts_vx_idx[:, 1], self.pts_vx_idx[:, 2]]
+
+    def save_labels_map_rgb(self, save_fp, colormap=None, ignore_classes=None, remove_classes=None):
+        """
+        color_map: see label_color_map()
+        ignore_classes: list of class IDs that you won't want colored (will be black)
+        remove_classes: list of class IDs for which points should be removes (i.e. dynamic objects)
+        """
+        pcd_map, labels_map = np.copy(self.pcd_map), np.copy(self.labels_map)
+        print(f"Labels info: {np.min(labels_map)}, {np.max(labels_map)}")
+        if colormap is None: colormap = self.label_color_map()
+
+        if ignore_classes is not None:
+            for ignore_class in ignore_classes:
+                colormap[ignore_class, :] = np.array([255, 255, 255])
+
+        if remove_classes is not None:
+            for remove_class in remove_classes:
+                idxs = labels_map.astype(int) == remove_class
+                pcd_map = np.delete(pcd_map, idxs, axis=0)
+                labels_map = np.delete(labels_map, idxs)
+
+        rgb_array = colormap[labels_map.reshape(-1).astype(int), :]
+        rgb_encoded = pypcd.encode_rgb_for_pcl(rgb_array)
+
+        # final_pcd_map = np.zeros((pcd_map.shape[0], 6))
+        final_pcd_map = np.zeros((pcd_map.shape[0], 4), dtype=float)
+        final_pcd_map[:, :3] = pcd_map[:, :3]
+        # final_pcd_map[:, 4] = rgb_encoded
+        # final_pcd_map[:, 5] = labels_map
+        final_pcd_map[:, 3] = rgb_encoded
+        # save files
+        N = 10000000        # max points per file
+        start = 0
+        end = N
+        pcd_save_idx = 0
+        while start < final_pcd_map.shape[0]:
+            if end > final_pcd_map.shape[0]: end = final_pcd_map.shape[0]
+            # pcd = pypcd.make_xyzirgb_label_point_cloud(final_pcd_map[start:end, :])
+            pcd = pypcd.make_xyz_rgb_point_cloud(final_pcd_map[start:end, :])
+            pcd.save_pcd(save_fp + f"{pcd_save_idx:02d}.pcd")
+            start = copy(end)
+            end = end + N
+            pcd_save_idx += 1
+
+    @staticmethod
+    def filtering_boundary(points, boundary):
+        # reshape points and labels
+        x_filter = np.logical_and(points[:, 0] >= boundary["minX"], points[:, 0] <= boundary["maxX"])
+        y_filter = np.logical_and(points[:, 1] >= boundary["minY"], points[:, 1] <= boundary["maxY"])
+        z_filter = np.logical_and(points[:, 2] >= boundary["minZ"], points[:, 2] <= boundary["maxZ"])
+        filter_mask = np.logical_and(np.logical_and(x_filter, y_filter), z_filter)
+        # filtering points and labels
+        return filter_mask
+
+    @staticmethod
+    def label_color_map():
+        pvkd_to_mapillary_rgb = {
+            0: (0, 0, 0),  # outlier
+            1: (0, 0, 142),  # car
+            2: (119, 11, 32),  # bicycle
+            3: (220, 20, 60),  # person
+            4: (0, 0, 70),  # truck
+            5: (128, 64, 128),  # road
+            6: (244, 35, 232),  # other-ground
+            7: (128, 64, 64),  # other_vehicle
+            8: (152, 251, 152),  # terrain
+            9: (70, 70, 70),  # building
+            10: (190, 153, 153),  # fence
+            11: (107, 142, 35),  # vegetation
+            12: (255, 255, 255),  # moving
+            13: (220, 220, 0),  # traffic-sign
+        }
+        color_array = np.array([value for key, value in pvkd_to_mapillary_rgb.items()], dtype=np.uint8).reshape(-1, 3)
+        return color_array
+
+    def faster_voxelize(self, points):
+        """
+            :param points: (N*4, ) numpy array
+            :return: voxelized_points, vozelized_labels
+        """
+        # reshape
+        vs = np.array(self.voxel_size).reshape(1, 3)
+        points = points.reshape(-1, 4)
+
+        # pointcloud limits
+        x_min = np.min(points[:, 0])
+        y_min = np.min(points[:, 1])
+        z_min = np.min(points[:, 2])
+        min_range = np.array([x_min, y_min, z_min]).reshape(1, 3)
+
+        # to voxel idx grid
+        voxelized_point = (points[:, :3] - min_range)
+        voxelized_point = voxelized_point / vs
+        voxelized_point = np.floor(voxelized_point)
+        all_pts_idx = np.copy(voxelized_point)
+
+        # unique voxels
+        voxelized_point, unique_idx = np.unique(voxelized_point, axis=0, return_index=True)
+        unique_pts_idx = all_pts_idx[unique_idx, :]
+
+        # make a point in voxel center
+        voxelized_point = voxelized_point * vs + vs / 2 + min_range
+        remissions = points[unique_idx, 3].reshape(-1, 1)
+        voxelized_point = np.hstack([voxelized_point, remissions])
+
+        return voxelized_point.astype(np.float32), all_pts_idx.astype(np.uint8), unique_pts_idx.astype(np.uint8)
+
+    @staticmethod
+    def get_best_ndt_pose(ndt_poses, ts):
+        ndt_time_diff = np.abs(ndt_poses[:, 0] - ts)
+
+        pose_idx = np.argmin(ndt_time_diff)
+        t = ndt_poses[pose_idx, 0]
+        pose = ndt_poses[pose_idx, 1:4]
+        euler = ndt_poses[pose_idx, 4:]
+        pose_quat = transformations.quaternion_from_euler(euler[0], euler[1], euler[2])
+        return t, pose, pose_quat
+
+    @staticmethod
+    def normalize_intensity(intensity, norm_factor = 5, max_intensity_value=255):
         return 2 * np.e ** (norm_factor * intensity / max_intensity_value) / \
             (1 + np.e ** (norm_factor * intensity / max_intensity_value)) - 1
 
-    def normalize_height(self, points_z, target_height=-1.73):
-        ground_height = np.percentile(points_z, 0.99)
+    @staticmethod
+    def shift_height(points_z, ground_height=None, target_height=-1.73):
+        if ground_height is None:
+            ground_height = np.percentile(points_z, 0.99)
         return points_z - (ground_height - target_height)
 
-    def to_XYZI_array(self, points_struct):
+    @staticmethod
+    def to_XYZI_array(points_struct):
         points = np.zeros((points_struct['x'].shape[0], 4), dtype=float)
         points[:, 0] = points_struct['x']
         points[:, 1] = points_struct['y']
@@ -131,30 +347,51 @@ class MapInferenceDataset:
         if 'intensity' in points_struct.dtype.names:
             points[:, 3] = points_struct['intensity']
         elif 'i' in points_struct.dtype.names:
-            points[:, 3] = points_struct['intensity']
+            points[:, 3] = points_struct['i']
         else:
             print("intensity not found, that's probably not good but feel free to supress this")
         return points
 
-    def load_map(self, pcd_map_path):
+    @staticmethod
+    def load_map(pcd_map_path):
         """Loads all maps in a directory and accumulates them"""
+        pcd_map = np.empty((0, 4))
+        start_time = time.time()
+        pcd_list = glob.glob(pcd_map_path + '/*.pcd')
+        for pcd_fp in pcd_list:
+            map_part = pypcd.point_cloud_from_path(pcd_fp)
+            pcd = np.ones((map_part.pc_data['x'].shape[0], 4))
+            pcd[:, 0] = map_part.pc_data['x']
+            pcd[:, 1] = map_part.pc_data['y']
+            pcd[:, 2] = map_part.pc_data['z']
+            pcd[:, 3] = map_part.pc_data['intensity']
+            pcd_map = np.vstack((pcd_map, pcd))
+        print(f"Map loaded with {pcd_map.shape[0]} points in {time.time() - start_time} seconds")
+        return pcd_map
+
+    @staticmethod
+    def build_kdtree(data):
+        start_time = time.time()
+        tree = KDTree(data)
+        print(f"Built KDTree in {time.time() - start_time} seconds")
+        return tree
+
+    @staticmethod
+    def query_kdtree(tree, pose, radius):
+        start_time = time.time()
+        search_idx = tree.query_ball_point(pose.reshape(3), radius)
+        # print(f"Map queried with {search_idx.shape[0]} points in {time.time() - start_time} seconds")
+        return search_idx
+
+    @staticmethod
+    def load_ndt_file(ndt_filepath):
+        # [timestamp, lidar_pose.x, lidar_pose.y, lidar_pose.z, lidar_pose.roll	lidar_pose.pitch, lidar_pose.yaw]
+        ndt_msgs = np.loadtxt(ndt_filepath, delimiter=',', skiprows=1, usecols=[1, 9, 10, 11, 12, 13, 14])
+        return ndt_msgs
 
     def __len__(self):
         """Denotes the total number of samples"""
-        return len(self.im_idx)
-
-    def __getitem__(self, index):
-        if self.data_type == 'bin':
-            raw_data = np.fromfile(self.im_idx[index], dtype=np.float32).reshape((-1, 4))
-        elif self.data_type == 'pcd':
-            points_struct = pypcd.PointCloud.from_path(self.im_idx[index])
-            raw_data = self.to_XYZI_array(points_struct.pc_data)
-            raw_data[:, 3] = self.normalize_intensity(raw_data[:, 3])
-            raw_data[:, 2] = self.normalize_height(raw_data[:, 2])
-        annotated_data = np.expand_dims(np.zeros_like(raw_data[:, 0], dtype=int), axis=1)
-        data_tuple = (raw_data[:, :3], annotated_data.astype(np.uint8))
-        data_tuple += (raw_data[:, 3],)
-        return data_tuple
+        return len(self.poses)
 
 @register_dataset
 class SemKITTI_demo(data.Dataset):
