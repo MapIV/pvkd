@@ -75,6 +75,7 @@ color_map: # bgr
   258: [180, 30, 80]
   259: [255, 0, 0]
   301: [220, 220, 220]
+
 content: # as a ratio with the total number of points
   0: 0.015399158107097381
   1: 0.0014757724554327481

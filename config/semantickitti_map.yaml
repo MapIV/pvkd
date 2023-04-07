@@ -24,7 +24,7 @@ model_params:
 ## Dataset options
 dataset_params:
   dataset_type: "cylinder_dataset"
-  pc_dataset_type: "SemKITTI_sk"
+  pc_dataset_type: "MapInferenceDataset"
   ignore_label: 0
   return_test: True
   fixed_volume_space: True
@@ -32,35 +32,35 @@ dataset_params:
   max_volume_space:
     - 50
     - 3.1415926
-    - 2.0
+    - 2.27
   min_volume_space:
     - 0
     - -3.1415926
-    - 4.0
+    - -3.73
 
 ###################
 ## Data_loader options
 train_data_loader:
-  data_path: "/media/map4/SSD_62/SemanticKitti/kittipanda_ms20_v005/sequences"
+  data_path: "/home/pe/Downloads/nagoya_station_pcd/pcd_map/PCD_FULL/"
   imageset: "train"
   return_ref: True
   batch_size: 2
   shuffle: True
-  num_workers: 24 #4
+  num_workers: 4
 
 val_data_loader:
-  data_path: "/media/map4/SSD_62/SemanticKitti/kittipanda_ms20_v005/sequences"
+  data_path: "/home/pe/Downloads/nagoya_station_pcd/pcd_map/PCD_FULL/"
   imageset: "val" #"val"
   return_ref: True
   batch_size: 1
   shuffle: False
-  num_workers: 4 #4
+  num_workers: 0 #4
 
 
 ###################
 ## Train params
 train_params:
-  model_load_path: "/home/map4/pvkd/model_load_dir/multiscan10_dyn/model_latest.pt"
+  model_load_path: "/home/pe/Downloads/model_epoch19_iter240000.pt"
   model_save_path: "./model_save_dir/multiscan10_dyn/model"
   checkpoint_every_n_steps: 5000
   max_num_epochs: 20 #40

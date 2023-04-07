@@ -32,11 +32,11 @@ dataset_params:
   max_volume_space:
     - 50
     - 3.1415926
-    - 2
+    - 2.27
   min_volume_space:
     - 0
     - -3.1415926
-    - -4
+    - -3.73
 
 
 ###################
