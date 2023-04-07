@@ -121,7 +121,7 @@ class MapInferenceDataset(data.Dataset):
 
         # Hardcoded
         self.search_radius = np.sqrt(25*25*2)   # closest to a 50m cube
-        self.voxel_size = [0.75, 0.75, 0.75]
+        self.voxel_size = [0.1, 0.1, 0.1]
         self.ground_height = 0
         self.boundary = {"minX": -50, "maxX": 50, "minY": -50, "maxY": 50, "minZ": -3.73, "maxZ": 2.27}
 
@@ -175,7 +175,7 @@ class MapInferenceDataset(data.Dataset):
         current_pcd = current_pcd[box_filter, :]
 
         # Adjust height
-        # current_pcd[:, 2] = self.shift_height(current_pcd[:, 2], self.ground_height)
+        current_pcd[:, 2] = self.shift_height(current_pcd[:, 2], self.ground_height)
 
         # Voxelize
         voxelized_pcd, self.pts_vx_idx, self.uni_vx_idx = self.faster_voxelize(current_pcd)
@@ -189,8 +189,8 @@ class MapInferenceDataset(data.Dataset):
         return data_tuple
 
     def get_voxel_item(self, index):
-        self.map_points_idx = self.query_kdtree(self.kd_tree, self.poses[index][:3, 3], self.search_radius)
-        current_pcd = self.pcd_map[self.map_points_idx, :]
+        map_points_idx = self.query_kdtree(self.kd_tree, self.poses[index][:3, 3], self.search_radius)
+        current_pcd = self.pcd_map[map_points_idx, :]
 
         # Transform
         intensity = np.copy(current_pcd[:, 3])
@@ -204,7 +204,7 @@ class MapInferenceDataset(data.Dataset):
         current_pcd = current_pcd[box_filter, :]
 
         # Adjust height
-        # current_pcd[:, 2] = self.shift_height(current_pcd[:, 2], self.ground_height)
+        current_pcd[:, 2] = self.shift_height(current_pcd[:, 2], self.ground_height)
 
         # Voxelize
         voxelized_pcd, _, _ = self.faster_voxelize(current_pcd)
@@ -363,7 +363,8 @@ class MapInferenceDataset(data.Dataset):
         pcd_map = np.empty((0, 4))
         start_time = time.time()
         pcd_list = glob.glob(pcd_map_path + '/*.pcd')
-        for pcd_fp in pcd_list:
+        for pcd_idx, pcd_fp in enumerate(pcd_list):
+            print(f"Loading Map .pcd file {pcd_idx+1}/{len(pcd_list)}", end='\r')
             map_part = pypcd.point_cloud_from_path(pcd_fp)
             pcd = np.ones((map_part.pc_data['x'].shape[0], 4))
             pcd[:, 0] = map_part.pc_data['x']
