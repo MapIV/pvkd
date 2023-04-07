@@ -121,7 +121,7 @@ class MapInferenceDataset(data.Dataset):
 
         # Hardcoded
         self.search_radius = np.sqrt(25*25*2)   # closest to a 50m cube
-        self.voxel_size = [0.1, 0.1, 0.1]
+        self.voxel_size = [0.05, 0.05, 0.05]
         self.ground_height = 0
 
         if imageset == 'train':
