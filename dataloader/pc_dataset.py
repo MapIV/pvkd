@@ -121,8 +121,10 @@ class MapInferenceDataset(data.Dataset):
 
         # Hardcoded
         self.search_radius = np.sqrt(25*25*2)   # closest to a 50m cube
-        self.voxel_size = [0.05, 0.05, 0.05]
+        self.voxel_size = [0.75, 0.75, 0.75]
         self.ground_height = 0
+        self.boundary = {"minX": -50, "maxX": 50, "minY": -50, "maxY": 50, "minZ": -3.73, "maxZ": 2.27}
+
 
         if imageset == 'train':
             print("You cannot use this dataloader for training~")
@@ -168,13 +170,12 @@ class MapInferenceDataset(data.Dataset):
         current_pcd = current_pcd.T
         current_pcd[:, 3] = intensity
 
-        boundary = {"minX": -50, "maxX": 50, "minY": -50, "maxY": 50, "minZ": -3.73, "maxZ": 2.27}
-        box_filter = self.filtering_boundary(current_pcd, boundary)
+        box_filter = self.filtering_boundary(current_pcd, self.boundary)
         self.map_points_idx = self.map_points_idx[box_filter]
         current_pcd = current_pcd[box_filter, :]
 
         # Adjust height
-        current_pcd[:, 2] = self.shift_height(current_pcd[:, 2], self.ground_height)
+        # current_pcd[:, 2] = self.shift_height(current_pcd[:, 2], self.ground_height)
 
         # Voxelize
         voxelized_pcd, self.pts_vx_idx, self.uni_vx_idx = self.faster_voxelize(current_pcd)
@@ -198,8 +199,12 @@ class MapInferenceDataset(data.Dataset):
         current_pcd = current_pcd.T
         current_pcd[:, 3] = intensity
 
+        # filter
+        box_filter = self.filtering_boundary(current_pcd, self.boundary)
+        current_pcd = current_pcd[box_filter, :]
+
         # Adjust height
-        current_pcd[:, 2] = self.shift_height(current_pcd[:, 2], self.ground_height)
+        # current_pcd[:, 2] = self.shift_height(current_pcd[:, 2], self.ground_height)
 
         # Voxelize
         voxelized_pcd, _, _ = self.faster_voxelize(current_pcd)

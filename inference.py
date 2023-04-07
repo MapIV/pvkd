@@ -61,7 +61,10 @@ def main(args):
                                                                    val_dataloader_config,
                                                                    grid_size=grid_size)
 
+
     output_path = args.output_path
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
     voting_num = 4
 
 
@@ -84,9 +87,9 @@ def main(args):
             test_pred_label = np.expand_dims(predict_labels,axis=1)
             test_pred_label = test_pred_label.astype(np.uint32)
             if args.map_inference:
-                # voxelized_pcd = test_pt_dataset.get_voxel_item(i_iter_test)
-                # color_map = test_pt_dataset.label_color_map()
-                # demo_plot(voxelized_pcd, test_pred_label, color_map)
+                voxelized_pcd = test_pt_dataset.get_voxel_item(i_iter_test)
+                color_map = test_pt_dataset.label_color_map()
+                demo_plot(voxelized_pcd, test_pred_label, color_map)
                 test_pt_dataset.update_labels_map(test_pred_label)
             else:
                 ex_idx = os.path.basename(test_pt_dataset.im_idx[test_index[0]])
