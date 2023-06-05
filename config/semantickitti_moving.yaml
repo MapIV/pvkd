@@ -50,7 +50,7 @@ train_data_loader:
 
 val_data_loader:
   data_path: "/media/map4/SSD_62/SemanticKitti/kittipanda_ms20_v005/sequences"
-  imageset: "val" #"val"
+  imageset: "test" #"val"
   return_ref: True
   batch_size: 1
   shuffle: False
@@ -60,7 +60,7 @@ val_data_loader:
 ###################
 ## Train params
 train_params:
-  model_load_path: "/home/map4/pvkd/model_load_dir/multiscan10_dyn/model_latest.pt"
+  model_load_path: "/home/map4/pvkd/model_save_dir/multiscan10_dyn/model_epoch19_66.643.pt"
   model_save_path: "./model_save_dir/multiscan10_dyn/model"
   checkpoint_every_n_steps: 5000
   max_num_epochs: 20 #40

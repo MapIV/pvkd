@@ -13,7 +13,7 @@ model_params:
 
   fea_dim: 9
   out_fea_dim: 256
-  num_class: 14 #20
+  num_class: 5 #20
   num_input_features: 32 #16
   use_norm: True
   # init size should be 48 for the x1.5 model, 32 otherwise
@@ -28,7 +28,7 @@ dataset_params:
   ignore_label: 0
   return_test: True
   fixed_volume_space: True
-  label_mapping: "./config/label_mapping/semantic-kitti-panda.yaml"
+  label_mapping: "./config/label_mapping/kittipanda_ground.yaml"
   max_volume_space:
     - 50
     - 3.1415926
@@ -41,7 +41,7 @@ dataset_params:
 ###################
 ## Data_loader options
 train_data_loader:
-  data_path: "/home/pe/Downloads/nagoya_station_pcd/pcd_map/PCD_FULL/"
+  data_path: "/home/map4/Downloads/nagoya_station/PCD_FULL/"
   imageset: "train"
   return_ref: True
   batch_size: 2
@@ -49,9 +49,9 @@ train_data_loader:
   num_workers: 4
 
 val_data_loader:
-  data_path: "/home/pe/Downloads/nagoya_station_pcd/pcd_map/PCD_FULL/"
-  imageset: "val" #"val"
-  return_ref: True
+  data_path: "/home/map4/Downloads/nagoya_station/PCD_FULL/"
+  imageset: "test" #"val"
+  return_ref: False
   batch_size: 1
   shuffle: False
   num_workers: 0 #4
@@ -60,8 +60,8 @@ val_data_loader:
 ###################
 ## Train params
 train_params:
-  model_load_path: "/home/pe/Downloads/model_epoch19_iter240000.pt"
-  model_save_path: "./model_save_dir/multiscan10_dyn/model"
+  model_load_path: "/home/map4/pvkd/model_save_dir/road_segmentation2/model_epoch20_iter248100.pt"
+  model_save_path: "./model_save_dir/road_segmentation/model"
   checkpoint_every_n_steps: 5000
   max_num_epochs: 20 #40
   eval_every_n_steps: 15001

@@ -13,7 +13,7 @@ model_params:
 
   fea_dim: 9
   out_fea_dim: 256
-  num_class: 14 #20
+  num_class: 10
   num_input_features: 32 #16
   use_norm: True
   # init size should be 48 for the x1.5 model, 32 otherwise
@@ -28,7 +28,7 @@ dataset_params:
   ignore_label: 0
   return_test: True
   fixed_volume_space: True
-  label_mapping: "./config/label_mapping/semantic-kitti-panda.yaml"
+  label_mapping: "./config/label_mapping/kittipanda_ground.yaml"
   max_volume_space:
     - 50
     - 3.1415926
@@ -50,7 +50,7 @@ train_data_loader:
 
 val_data_loader:
   data_path: "/media/map4/SSD_62/SemanticKitti/kittipanda_ms20_v005/sequences"
-  imageset: "test" #"val"
+  imageset: "val"
   return_ref: True
   batch_size: 1
   shuffle: False
@@ -60,8 +60,8 @@ val_data_loader:
 ###################
 ## Train params
 train_params:
-  model_load_path: "/home/map4/pvkd/model_save_dir/multiscan10_dyn/model_epoch19_66.643.pt"
-  model_save_path: "./model_save_dir/multiscan10_dyn/model"
+  model_load_path: ""
+  model_save_path: "./model_save_dir/road_segmentation3/model"
   checkpoint_every_n_steps: 5000
   max_num_epochs: 20 #40
   eval_every_n_steps: 15001
