@@ -29,10 +29,11 @@ def to_XYZI_array(points_struct):
         print("intensity not found, that's probably not good but feel free to supress this")
     return points
 
-label_in = '/home/map4/pvkd/out_cyl/semantickitti_multiscan10_dyn'
-sequence_pcd_in = '/media/map4/SSD_62/SemanticKitti/semantic_kitti_ms10_v005_dyn/sequences/08/velodyne'
+label_in = '/home/map4/pvkd/out_cyl/output/'
+sequence_pcd_in = '/media/map4/SSD_62/SemanticKitti/kittipanda_ms20_v005/sequences/15/velodyne'
 
 label_list = glob.glob(label_in + '/*')
+label_list.sort()
 
 for f, label_fp in enumerate(label_list):
     print('{}/{}'.format(f, len(label_list)))
@@ -65,5 +66,5 @@ for f, label_fp in enumerate(label_list):
     ax.set_axis_off()
     # plt.show()
 
-    plt.savefig(os.path.join('/home/map4/pvkd/out_cyl/semantickitti_multiscan10_dyn_fig', idx+'.png'), dpi=200, bbox_inches='tight', pad_inches=0)
+    plt.savefig(os.path.join('/home/map4/pvkd/out_cyl/pvkd_training', idx+'.png'), dpi=200, bbox_inches='tight', pad_inches=0)
     plt.close()

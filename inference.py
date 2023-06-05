@@ -51,9 +51,7 @@ def main(args):
     unique_label_str = [SemKITTI_label_name[x] for x in unique_label + 1]
 
     my_model = model_builder.build(model_config)
-    if os.path.exists(model_load_path):
-        # my_model = load_checkpoint(model_load_path, my_model)
-        my_model = load_checkpoint_1b1(model_load_path, my_model)
+    my_model = load_checkpoint_1b1(model_load_path, my_model)
 
     my_model.to(pytorch_device)
 
@@ -89,7 +87,7 @@ def main(args):
             if args.map_inference:
                 voxelized_pcd = test_pt_dataset.get_voxel_item(i_iter_test)
                 color_map = test_pt_dataset.label_color_map()
-                demo_plot(voxelized_pcd, test_pred_label, color_map)
+                # demo_plot(voxelized_pcd, test_pred_label, color_map)
                 test_pt_dataset.update_labels_map(test_pred_label)
             else:
                 ex_idx = os.path.basename(test_pt_dataset.im_idx[test_index[0]])

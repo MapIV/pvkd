@@ -80,7 +80,10 @@ def main(args):
 
     while epoch < train_hypers['max_num_epochs']:
         loss_list = []
-        pbar = tqdm(total=len(train_dataset_loader))
+        if args.eval:
+            pbar = tqdm(total=len(val_dataset_loader))
+        else:
+            pbar = tqdm(total=len(train_dataset_loader))
         time.sleep(10)
         # lr_scheduler.step(epoch)
         for i_iter, (_, train_vox_label, train_grid, _, train_pt_fea) in enumerate(train_dataset_loader):
@@ -110,9 +113,7 @@ def main(args):
                                                                 val_grid[count][:, 2]], val_pt_labs[count],
                                                             unique_label))
                         val_loss_list.append(loss.detach().cpu().numpy())
-                    if args.eval:
-                        print("Eval complete")
-                        sys.exit()
+                        pbar.update(1)
                 my_model.train()
                 iou = per_class_iu(sum(hist_list))
                 print('Validation per class iou: ')
@@ -130,6 +131,11 @@ def main(args):
                       (val_miou, best_val_miou))
                 print('Current val loss is %.3f' %
                       (np.mean(val_loss_list)))
+
+                if args.eval:
+                    print("Eval complete")
+                    pbar.close()
+                    sys.exit()
 
             train_pt_fea_ten = [torch.from_numpy(i).type(torch.FloatTensor).to(pytorch_device) for i in train_pt_fea]
             # train_grid_ten = [torch.from_numpy(i[:,:2]).to(pytorch_device) for i in train_grid]

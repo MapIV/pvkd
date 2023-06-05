@@ -121,7 +121,7 @@ class MapInferenceDataset(data.Dataset):
 
         # Hardcoded
         self.search_radius = np.sqrt(25*25*2)   # closest to a 50m cube
-        self.voxel_size = [0.1, 0.1, 0.1]
+        self.voxel_size = [0.075, 0.075, 0.075]
         self.ground_height = 0
         self.boundary = {"minX": -50, "maxX": 50, "minY": -50, "maxY": 50, "minZ": -3.73, "maxZ": 2.27}
 
@@ -238,11 +238,11 @@ class MapInferenceDataset(data.Dataset):
         rgb_encoded = pypcd.encode_rgb_for_pcl(rgb_array)
 
         # final_pcd_map = np.zeros((pcd_map.shape[0], 6))
-        final_pcd_map = np.zeros((pcd_map.shape[0], 4), dtype=float)
+        final_pcd_map = np.zeros((pcd_map.shape[0], 5), dtype=float)
         final_pcd_map[:, :3] = pcd_map[:, :3]
-        # final_pcd_map[:, 4] = rgb_encoded
+        # final_pcd_map[:, 3] = rgb_encoded
+        final_pcd_map[:, 4] = rgb_encoded
         # final_pcd_map[:, 5] = labels_map
-        final_pcd_map[:, 3] = rgb_encoded
         # save files
         N = 10000000        # max points per file
         start = 0
@@ -251,7 +251,8 @@ class MapInferenceDataset(data.Dataset):
         while start < final_pcd_map.shape[0]:
             if end > final_pcd_map.shape[0]: end = final_pcd_map.shape[0]
             # pcd = pypcd.make_xyzirgb_label_point_cloud(final_pcd_map[start:end, :])
-            pcd = pypcd.make_xyz_rgb_point_cloud(final_pcd_map[start:end, :])
+            pcd = pypcd.make_xyzi_label_point_cloud(final_pcd_map[start:end, :])
+            # pcd = pypcd.make_xyz_rgb_point_cloud(final_pcd_map[start:end, :])
             pcd.save_pcd(save_fp + f"{pcd_save_idx:02d}.pcd")
             start = copy(end)
             end = end + N
@@ -270,20 +271,25 @@ class MapInferenceDataset(data.Dataset):
     @staticmethod
     def label_color_map():
         pvkd_to_mapillary_rgb = {
-            0: (0, 0, 0),  # outlier
-            1: (0, 0, 142),  # car
-            2: (119, 11, 32),  # bicycle
-            3: (220, 20, 60),  # person
-            4: (0, 0, 70),  # truck
-            5: (128, 64, 128),  # road
-            6: (244, 35, 232),  # other-ground
-            7: (128, 64, 64),  # other_vehicle
-            8: (152, 251, 152),  # terrain
-            9: (70, 70, 70),  # building
-            10: (190, 153, 153),  # fence
-            11: (107, 142, 35),  # vegetation
-            12: (255, 255, 255),  # moving
-            13: (220, 220, 0),  # traffic-sign
+            # 0: (0, 0, 0),  # outlier
+            # 1: (0, 0, 142),  # car
+            # 2: (119, 11, 32),  # bicycle
+            # 3: (220, 20, 60),  # person
+            # 4: (0, 0, 70),  # truck
+            # 5: (128, 64, 128),  # road
+            # 6: (244, 35, 232),  # other-ground
+            # 7: (128, 64, 64),  # other_vehicle
+            # 8: (152, 251, 152),  # terrain
+            # 9: (70, 70, 70),  # building
+            # 10: (190, 153, 153),  # fence
+            # 11: (107, 142, 35),  # vegetation
+            # 12: (255, 255, 255),  # moving
+            # 13: (220, 220, 0),  # traffic-sign
+            0: [70, 70, 70],  # outlier
+            1: [128, 64, 128],  # road
+            2: [244, 35, 232],  # bicycle
+            3: [220, 20, 60],  # person
+            4: [152, 251, 152],  # truck
         }
         color_array = np.array([value for key, value in pvkd_to_mapillary_rgb.items()], dtype=np.uint8).reshape(-1, 3)
         return color_array
